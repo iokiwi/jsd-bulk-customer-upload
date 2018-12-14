@@ -29,7 +29,8 @@ import json
 import logging
 import argparse
 import csv
-from urlparse import urlsplit
+import sys
+# from urlparse import urlsplit
 
 parser = argparse.ArgumentParser()
 parser.add_argument("base_url", help="The url of the hosted instance of JIRA")
@@ -57,7 +58,7 @@ def init():
 
 def parse_csv(filename):
     output = []
-    with open(filename, 'rb') as f:
+    with open(filename, 'r') as f:
         reader = csv.reader(f, delimiter=',', quotechar='"')
         for row in reader:
             output.append(row)
@@ -71,7 +72,6 @@ def get_session(base_url, auth_user, auth_pass):
     session.auth = (auth_user, auth_pass)
     url = base_url + "/rest/auth/1/session"
     response = session.get(url)
-    logging.debug("{} ({}) - [{}] {}".format(response.status_code, response.reason, "GET", url))
 
     if response.ok:
         return session
@@ -80,14 +80,18 @@ def get_session(base_url, auth_user, auth_pass):
     sys.exit()
 
 
-def get_paginated_resource(resource_url, content_key, headers={}):
+def get_paginated_resource(url, content_key, headers=None, params=None):
+
+    if headers is None:
+        headers = {}
+    if params is None:
+        params = {}
+
     results, last_page, start, step = [], False, 0, 0
-    parameter_join_character = "?" if urlsplit(resource_url).query == "" else "&"
 
     while not last_page:
-        url = resource_url + "{}start={}".format(parameter_join_character, start)
+        params["start"] = start
         response = jira_session.get(url, headers=headers)
-        logging.debug("{} ({}) - [{}] {}".format(response.status_code, response.reason, "GET", url))
 
         if response.ok:
             _json = json.loads(response.text)
@@ -109,10 +113,8 @@ def add_customer_to_organization(organization, customer):
         "Content-Type": "application/json"
     }
     fields = {"usernames": [customer["emailAddress"]]}
-    logging.debug(organization)
     url = api_url + "/organization/{}/user".format(organization["id"])
     response = jira_session.post(url, headers=headers, data=json.dumps(fields))
-    logging.debug("{} ({}) - [{}] {}".format(response.status_code, response.reason, "POST", url))
 
     return response.ok
 
@@ -125,12 +127,10 @@ def add_organization_to_servicedesk(servicedesk_id, organization):
     fields = {"organizationId":  organization["id"]}
     url = api_url + "/servicedesk/{}/organization".format(servicedesk_id)
     response = jira_session.post(url, headers=headers, data=json.dumps(fields))
-    logging.debug("{} ({}) - [{}] {}".format(response.status_code, response.reason, "POST", url))
 
     if response.ok:
         logging.info("{} was added to service desk {}".format(organization["name"], servicedesk_id))
 
-    logging.error(response.text)
     return False
 
 
@@ -142,17 +142,14 @@ def add_customer_to_servicedesk(servicedesk_id, customer):
     fields = {"usernames":  [customer["emailAddress"]]}
     url = api_url + "/servicedesk/{}/customer".format(servicedesk_id)
     response = jira_session.post(url, headers=headers, data=json.dumps(fields))
-    logging.debug("{} ({}) - [{}] {}".format(response.status_code, response.reason, "POST", url))
 
-    if response.ok:
-        logging.info("{} was added to service desk {}".format(customer["fullName"]))
+    if response.ok and response.status_code != 204:
+        logging.info("{} was added to service desk {}".format(customer["displayName"], servicedesk_id))
 
-    logging.error(response.text)
     return False
 
 
 def create_customer(customer):
-    logging.debug(customer)
     headers = {
         "X-ExperimentalApi": "true",
         "Content-Type": "application/json"
@@ -160,13 +157,11 @@ def create_customer(customer):
     payload = {"email": customer["emailAddress"], "fullName": customer["fullName"]}
     url = api_url + "/customer"
     response = jira_session.post(url, headers=headers, data=json.dumps(payload))
-    logging.debug("{} ({}) - [{}] {}".format(response.status_code, response.reason, "POST", url))
 
     if response.ok:
         logging.info("{} was successfully created".format(customer["emailAddress"]))
         return json.loads(response.text)
-
-    logging.error(response.text)
+    
     return False
 
 
@@ -178,13 +173,11 @@ def create_organization(name):
     payload = {"name": name}
     url = api_url + "/organization"
     response = jira_session.post(url, headers=headers, data=json.dumps(payload))
-    logging.debug("{} ({}) - [{}] {}".format(response.status_code, response.reason, "POST", url))
 
     if response.ok:
         logging.info("{} was successfully created".format(name))
         return json.loads(response.text)
 
-    logging.error(response.text)
     return False
 
 
@@ -221,7 +214,7 @@ def main():
             logging.exception("Failed to process row: {}".format(row))
             rows_not_processed.append(row)
 
-    logging.info("The following rows not processed")
+    logging.info("An error occurred while processing the following rows.")
 
     for row in rows_not_processed:
         print(row)
