@@ -24,7 +24,11 @@ CSV Format: (CSV is assumed to have a header row)
   Microsoft, Bill Gates, bill.gates@microsoft.com
 """
 
-import requests, json, logging, argparse, csv
+import requests
+import json
+import logging
+import argparse
+import csv
 from urlparse import urlsplit
 
 parser = argparse.ArgumentParser()
@@ -44,10 +48,12 @@ api_url = args.base_url + "/rest/servicedeskapi"
 
 rows_not_processed = []
 
+
 def init():
     # init session
     global jira_session
     jira_session = get_session(args.base_url, args.auth_user, args.auth_pass)
+
 
 def parse_csv(filename):
     output = []
@@ -57,12 +63,13 @@ def parse_csv(filename):
             output.append(row)
     return output
 
+
 def get_session(base_url, auth_user, auth_pass):
-    #init session
+    # init session
     logging.info("Initializing session")
     session = requests.Session()
     session.auth = (auth_user, auth_pass)
-    url = args.base_url + "/rest/auth/1/session"
+    url = base_url + "/rest/auth/1/session"
     response = session.get(url)
     logging.debug("{} ({}) - [{}] {}".format(response.status_code, response.reason, "GET", url))
 
@@ -71,6 +78,7 @@ def get_session(base_url, auth_user, auth_pass):
 
     logging.error("Session initialization falied with status {} ({}).".format(response.status_code, response.reason))
     sys.exit()
+
 
 def get_paginated_resource(resource_url, content_key, headers={}):
     results, last_page, start, step = [], False, 0, 0
@@ -88,17 +96,19 @@ def get_paginated_resource(resource_url, content_key, headers={}):
             results += _json[content_key]
     return results
 
+
 def get_organizations():
-    headers = {"X-ExperimentalApi" : "true" }
+    headers = {"X-ExperimentalApi": "true"}
     organizations_list = get_paginated_resource(api_url + "/organization", "values", headers)
     return {organization["name"]: organization for organization in organizations_list}
 
+
 def add_customer_to_organization(organization, customer):
     headers = {
-        "X-ExperimentalApi" : "true",
+        "X-ExperimentalApi": "true",
         "Content-Type": "application/json"
     }
-    fields = { "usernames":  [customer["emailAddress"]] }
+    fields = {"usernames": [customer["emailAddress"]]}
     logging.debug(organization)
     url = api_url + "/organization/{}/user".format(organization["id"])
     response = jira_session.post(url, headers=headers, data=json.dumps(fields))
@@ -106,12 +116,13 @@ def add_customer_to_organization(organization, customer):
 
     return response.ok
 
+
 def add_organization_to_servicedesk(servicedesk_id, organization):
     headers = {
-        "X-ExperimentalApi" : "true",
+        "X-ExperimentalApi": "true",
         "Content-Type": "application/json"
     }
-    fields = { "organizationId":  organization["id"] }
+    fields = {"organizationId":  organization["id"]}
     url = api_url + "/servicedesk/{}/organization".format(servicedesk_id)
     response = jira_session.post(url, headers=headers, data=json.dumps(fields))
     logging.debug("{} ({}) - [{}] {}".format(response.status_code, response.reason, "POST", url))
@@ -122,12 +133,13 @@ def add_organization_to_servicedesk(servicedesk_id, organization):
     logging.error(response.text)
     return False
 
+
 def add_customer_to_servicedesk(servicedesk_id, customer):
     headers = {
-        "X-ExperimentalApi" : "true",
+        "X-ExperimentalApi": "true",
         "Content-Type": "application/json"
     }
-    fields = { "usernames":  [customer["emailAddress"]] }
+    fields = {"usernames":  [customer["emailAddress"]]}
     url = api_url + "/servicedesk/{}/customer".format(servicedesk_id)
     response = jira_session.post(url, headers=headers, data=json.dumps(fields))
     logging.debug("{} ({}) - [{}] {}".format(response.status_code, response.reason, "POST", url))
@@ -138,13 +150,14 @@ def add_customer_to_servicedesk(servicedesk_id, customer):
     logging.error(response.text)
     return False
 
+
 def create_customer(customer):
     logging.debug(customer)
     headers = {
-        "X-ExperimentalApi" : "true",
+        "X-ExperimentalApi": "true",
         "Content-Type": "application/json"
     }
-    payload = { "email": customer["emailAddress"], "fullName": customer["fullName"]}
+    payload = {"email": customer["emailAddress"], "fullName": customer["fullName"]}
     url = api_url + "/customer"
     response = jira_session.post(url, headers=headers, data=json.dumps(payload))
     logging.debug("{} ({}) - [{}] {}".format(response.status_code, response.reason, "POST", url))
@@ -156,12 +169,13 @@ def create_customer(customer):
     logging.error(response.text)
     return False
 
+
 def create_organization(name):
     headers = {
-        "X-ExperimentalApi" : "true",
+        "X-ExperimentalApi": "true",
         "Content-Type": "application/json"
     }
-    payload = { "name": name}
+    payload = {"name": name}
     url = api_url + "/organization"
     response = jira_session.post(url, headers=headers, data=json.dumps(payload))
     logging.debug("{} ({}) - [{}] {}".format(response.status_code, response.reason, "POST", url))
@@ -172,6 +186,7 @@ def create_organization(name):
 
     logging.error(response.text)
     return False
+
 
 def main():
     global rows_not_processed
@@ -186,7 +201,7 @@ def main():
             organization_name, customer_name, customer_email = row[0], row[1], row[2]
 
             # Create the customer if they do not already exist
-            new_customer = { "fullName":  customer_name, "emailAddress": customer_email}
+            new_customer = {"fullName":  customer_name, "emailAddress": customer_email}
             existing_customer = create_customer(new_customer)
             customer = existing_customer if existing_customer else new_customer
 
@@ -210,6 +225,7 @@ def main():
 
     for row in rows_not_processed:
         print(row)
+
 
 if __name__ == "__main__":
     init()
