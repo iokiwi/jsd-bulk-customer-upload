@@ -28,21 +28,16 @@ import requests, json, logging, argparse, csv
 from urlparse import urlsplit
 
 parser = argparse.ArgumentParser()
-parser.add_argument( "base_url", help="The url of the hosted instance of JIRA")
-parser.add_argument( "auth_user", help="Username for basic http authentication")
-parser.add_argument( "auth_pass", help="Password for basic http authentication")
-parser.add_argument( "filename", help="The issuetype name of the initiative")
-parser.add_argument( "servicedesk_id", help="The id of the service desk")
-parser.add_argument( "-l", "--loglevel", help="Set log level (DEBUG,INFO,WARNING,ERROR,CRITICAL)")
+parser.add_argument("base_url", help="The url of the hosted instance of JIRA")
+parser.add_argument("auth_user", help="Username for basic http authentication")
+parser.add_argument("auth_pass", help="Password for basic http authentication")
+parser.add_argument("filename", help="The name of the csv for bulk upload")
+parser.add_argument("servicedesk_id", help="The id of the service desk")
+parser.add_argument("-l", "--loglevel", type=str.upper, default="INFO",
+                    choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], help="Set log level")
 args = parser.parse_args()
 
-# Initialize logging
-logger = logging.getLogger(__name__)
-logger.setLevel(getattr(logging, args.loglevel.upper() if args.loglevel else "INFO"))
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-handler=logging.StreamHandler()
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+logging.basicConfig(level=args.loglevel, format='%(asctime)s - %(levelname)s - %(message)s')
 
 jira_session = None
 api_url = args.base_url + "/rest/servicedeskapi"
@@ -64,17 +59,17 @@ def parse_csv(filename):
 
 def get_session(base_url, auth_user, auth_pass):
     #init session
-    logger.info("Initializing session")
+    logging.info("Initializing session")
     session = requests.Session()
     session.auth = (auth_user, auth_pass)
     url = args.base_url + "/rest/auth/1/session"
     response = session.get(url)
-    logger.debug("{} ({}) - [{}] {}".format(response.status_code, response.reason, "GET", url))
+    logging.debug("{} ({}) - [{}] {}".format(response.status_code, response.reason, "GET", url))
 
     if response.ok:
         return session
 
-    logger.error("Session initialization falied with status {} ({}).".format(response.status_code, response.reason))
+    logging.error("Session initialization falied with status {} ({}).".format(response.status_code, response.reason))
     sys.exit()
 
 def get_paginated_resource(resource_url, content_key, headers={}):
@@ -84,7 +79,7 @@ def get_paginated_resource(resource_url, content_key, headers={}):
     while not last_page:
         url = resource_url + "{}start={}".format(parameter_join_character, start)
         response = jira_session.get(url, headers=headers)
-        logger.debug("{} ({}) - [{}] {}".format(response.status_code, response.reason, "GET", url))
+        logging.debug("{} ({}) - [{}] {}".format(response.status_code, response.reason, "GET", url))
 
         if response.ok:
             _json = json.loads(response.text)
@@ -104,10 +99,10 @@ def add_customer_to_organization(organization, customer):
         "Content-Type": "application/json"
     }
     fields = { "usernames":  [customer["emailAddress"]] }
-    logger.debug(organization)
+    logging.debug(organization)
     url = api_url + "/organization/{}/user".format(organization["id"])
     response = jira_session.post(url, headers=headers, data=json.dumps(fields))
-    logger.debug("{} ({}) - [{}] {}".format(response.status_code, response.reason, "POST", url))
+    logging.debug("{} ({}) - [{}] {}".format(response.status_code, response.reason, "POST", url))
 
     return response.ok
 
@@ -119,12 +114,12 @@ def add_organization_to_servicedesk(servicedesk_id, organization):
     fields = { "organizationId":  organization["id"] }
     url = api_url + "/servicedesk/{}/organization".format(servicedesk_id)
     response = jira_session.post(url, headers=headers, data=json.dumps(fields))
-    logger.debug("{} ({}) - [{}] {}".format(response.status_code, response.reason, "POST", url))
+    logging.debug("{} ({}) - [{}] {}".format(response.status_code, response.reason, "POST", url))
 
     if response.ok:
-        logger.info("{} was added to service desk {}".format(organization["name"], servicedesk_id))
+        logging.info("{} was added to service desk {}".format(organization["name"], servicedesk_id))
 
-    logger.error(response.text)
+    logging.error(response.text)
     return False
 
 def add_customer_to_servicedesk(servicedesk_id, customer):
@@ -135,16 +130,16 @@ def add_customer_to_servicedesk(servicedesk_id, customer):
     fields = { "usernames":  [customer["emailAddress"]] }
     url = api_url + "/servicedesk/{}/customer".format(servicedesk_id)
     response = jira_session.post(url, headers=headers, data=json.dumps(fields))
-    logger.debug("{} ({}) - [{}] {}".format(response.status_code, response.reason, "POST", url))
+    logging.debug("{} ({}) - [{}] {}".format(response.status_code, response.reason, "POST", url))
 
     if response.ok:
-        logger.info("{} was added to service desk {}".format(customer["fullName"]))
+        logging.info("{} was added to service desk {}".format(customer["fullName"]))
 
-    logger.error(response.text)
+    logging.error(response.text)
     return False
 
 def create_customer(customer):
-    logger.debug(customer)
+    logging.debug(customer)
     headers = {
         "X-ExperimentalApi" : "true",
         "Content-Type": "application/json"
@@ -152,13 +147,13 @@ def create_customer(customer):
     payload = { "email": customer["emailAddress"], "fullName": customer["fullName"]}
     url = api_url + "/customer"
     response = jira_session.post(url, headers=headers, data=json.dumps(payload))
-    logger.debug("{} ({}) - [{}] {}".format(response.status_code, response.reason, "POST", url))
+    logging.debug("{} ({}) - [{}] {}".format(response.status_code, response.reason, "POST", url))
 
     if response.ok:
-        logger.info("{} was successfully created".format(customer["emailAddress"]))
+        logging.info("{} was successfully created".format(customer["emailAddress"]))
         return json.loads(response.text)
 
-    logger.error(response.text)
+    logging.error(response.text)
     return False
 
 def create_organization(name):
@@ -169,13 +164,13 @@ def create_organization(name):
     payload = { "name": name}
     url = api_url + "/organization"
     response = jira_session.post(url, headers=headers, data=json.dumps(payload))
-    logger.debug("{} ({}) - [{}] {}".format(response.status_code, response.reason, "POST", url))
+    logging.debug("{} ({}) - [{}] {}".format(response.status_code, response.reason, "POST", url))
 
     if response.ok:
-        logger.info("{} was successfully created".format(name))
+        logging.info("{} was successfully created".format(name))
         return json.loads(response.text)
 
-    logger.error(response.text)
+    logging.error(response.text)
     return False
 
 def main():
@@ -208,10 +203,10 @@ def main():
             # Add the customer into the service desk
             add_customer_to_servicedesk(args.servicedesk_id, customer)
         except:
-            logger.exception("Failed to process row: {}".format(row))
+            logging.exception("Failed to process row: {}".format(row))
             rows_not_processed.append(row)
 
-    logger.info("The following rows not processed")
+    logging.info("The following rows not processed")
 
     for row in rows_not_processed:
         print(row)
