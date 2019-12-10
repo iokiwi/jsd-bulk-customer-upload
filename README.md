@@ -1,7 +1,5 @@
 # README
 
-[![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
-
 Written to address the need to be able bulk import Customers and Organizations to Jira Service Desk. This was an internal need for my work as an Atlassian Solution partner / Jira Administrator and addressed a need from the community as well.
 
 [How to Bulk add Organizations and Customers in Service Desk Cloud?](https://community.atlassian.com/t5/Jira-Service-Desk-questions/How-to-Bulk-add-Organizations-and-Customers-in-Service-Desk/qaq-p/85932)
