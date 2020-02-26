@@ -1,35 +1,10 @@
-"""
-usage: bulk_customer_import.py [-h] [-l LOGLEVEL]
-                               base_url auth_user auth_pass filename
-                               servicedesk_id
-
-positional arguments:
-  base_url              The url of the hosted instance of JIRA https://yourdomain.atlassian.net
-  auth_user             Username for basic http authentication (Account needs to be jira admin)
-  auth_pass             Password for basic http authentication
-  filename              The filepath to the CSV. CSV is assumed to have a header row. Columns ordered Organisation, Full Name, Email Address
-  servicedesk_id        The id of the service desk e.g https://<base_url>/servicedesk/customer/portal/2  <-- the '2' is the ID
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -l LOGLEVEL, --loglevel LOGLEVEL
-                        Set log level (DEBUG,INFO,WARNING,ERROR,CRITICAL)
-
-example:
-  python bulk_customer_import.py "https://mycustomer.atlassian.net" "local-admin" "P4ssw0rd" customers.csv 2 -l debug
-
-CSV Format: (CSV is assumed to have a header row)
-  Organisation Name, Customer Full Name, Customer Email
-  Apple, Steve Jobs, steve.jobs@apple.com
-  Microsoft, Bill Gates, bill.gates@microsoft.com
-"""
-
 import requests
 import json
 import logging
 import argparse
 import csv
 import sys
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("base_url", help="The url of the hosted instance of JIRA")
@@ -98,7 +73,7 @@ def get_paginated_resource(url, content_key, headers=None, params=None):
     if params is None:
         params = {}
 
-    results, last_page, start, step = [], False, 0, 0
+    results, last_page, start = [], False, 0
 
     while not last_page:
         params["start"] = start
