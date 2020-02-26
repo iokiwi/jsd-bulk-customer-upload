@@ -209,14 +209,15 @@ def main():
 
             # Add the customer into the service desk
             add_customer_to_servicedesk(args.servicedesk_id, customer)
-        except:
-            logging.exception("Failed to process row: {}".format(row))
+        except Exception as e:
+            print("Failed to process row: {}".format(row))
+            logging.exception(e)
             rows_not_processed.append(row)
 
-    logging.info("An error occurred while processing the following rows.")
-
-    for row in rows_not_processed:
-        print(row)
+    if rows_not_processed:
+        print("An error occurred while processing the following rows.")
+        for row in rows_not_processed:
+            print(row)
 
 
 if __name__ == "__main__":
