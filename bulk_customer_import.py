@@ -30,7 +30,6 @@ import logging
 import argparse
 import csv
 import sys
-# from urlparse import urlsplit
 
 parser = argparse.ArgumentParser()
 parser.add_argument("base_url", help="The url of the hosted instance of JIRA")
@@ -112,7 +111,7 @@ def add_customer_to_organization(organization, customer):
         "X-ExperimentalApi": "true",
         "Content-Type": "application/json"
     }
-    fields = {"usernames": [customer["emailAddress"]]}
+    fields = {"accountIds": [customer["accountId"]]}
     url = api_url + "/organization/{}/user".format(organization["id"])
     response = jira_session.post(url, headers=headers, data=json.dumps(fields))
 
@@ -139,7 +138,7 @@ def add_customer_to_servicedesk(servicedesk_id, customer):
         "X-ExperimentalApi": "true",
         "Content-Type": "application/json"
     }
-    fields = {"usernames":  [customer["emailAddress"]]}
+    fields = {"accountIds": [customer["accountId"]]}
     url = api_url + "/servicedesk/{}/customer".format(servicedesk_id)
     response = jira_session.post(url, headers=headers, data=json.dumps(fields))
 
@@ -154,14 +153,14 @@ def create_customer(customer):
         "X-ExperimentalApi": "true",
         "Content-Type": "application/json"
     }
-    payload = {"email": customer["emailAddress"], "fullName": customer["fullName"]}
+    payload = {"email": customer["emailAddress"], "displayName": customer["displayName"]}
     url = api_url + "/customer"
     response = jira_session.post(url, headers=headers, data=json.dumps(payload))
-
+    logging.debug(response.text)
     if response.ok:
         logging.info("{} was successfully created".format(customer["emailAddress"]))
         return json.loads(response.text)
-    
+
     return False
 
 
@@ -194,7 +193,7 @@ def main():
             organization_name, customer_name, customer_email = row[0], row[1], row[2]
 
             # Create the customer if they do not already exist
-            new_customer = {"fullName":  customer_name, "emailAddress": customer_email}
+            new_customer = {"displayName":  customer_name, "emailAddress": customer_email}
             existing_customer = create_customer(new_customer)
             customer = existing_customer if existing_customer else new_customer
 
