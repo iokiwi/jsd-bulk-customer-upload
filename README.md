@@ -11,7 +11,7 @@ The versions of Jira Service Desk the script has been tested against are.
 
 ## Usage
 ```
-usage: bulk_customer_import.py [-h] [-l LOGLEVEL]
+usage: python -m bulk_customer_import [-h] [-l LOGLEVEL]
                                base_url auth_user auth_pass filename
                                servicedesk_id
 ```
