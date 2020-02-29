@@ -1,0 +1,53 @@
+version: '3'
+services:
+  postgres:
+    image: postgres:9.6
+    # container_name: postgresql-jira
+    volumes: 
+      - pg_data:/var/lib/postgresql/data
+    ports: 
+      - 5432:5432
+    expose:
+      - 5432
+    environment:
+      - POSTGRES_USER=atlassian
+      - POSTGRES_PASSWORD=atlassian
+      - POSTGRES_DB=jiradb
+      - POSTGRES_ENCODING=UTF8
+      - POSTGRES_COLLATE=C
+      - POSTGRES_COLLATE_TYPE=C
+    networks:
+      - dockernet1
+
+  jira:
+    image: atlassian/jira-servicedesk:4.7.1
+    container_name: jira
+    volumes: 
+      - jira_home:/var/atlassian/application-data/jira
+    ports: 
+      - 8080:8080
+    environment:
+      - TZ=Pacific/Auckland 
+      - JVM_MINIMUM_MEMORY=512m
+      - JVM_MAXIMUM_MEMORY=2048m
+      - ATL_JDBC_URL=jdbc:postgresql://postgres:5432/jiradb
+      - ATL_JDBC_USER=atlassian
+      - ATL_JDBC_PASSWORD=atlassian
+      - ATL_DB_DRIVER=org.postgresql.Driver
+      - ATL_DB_TYPE=postgres72
+      - ATL_TOMCAT_PORT=8080
+      - ATL_TOMCAT_CONTEXTPATH=/jira
+    networks:
+      - dockernet1
+    depends_on:
+      - postgres
+
+volumes:
+    jira_home:
+        external: false
+    pg_data:
+        external: false
+
+networks:
+  dockernet1: 
+    driver: bridge
