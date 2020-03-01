@@ -14,13 +14,13 @@ class OrganizationManager(object):
         )
 
     def create(self, name):
-        LOG.info(f"Creating organisation")
+        LOG.info("Creating organisation")
         return self.client.post(
             "organization", data={"name": name}, experimental=True
         ).json()
 
     def add_customer(self, organization, customer):
-        LOG.info(f"Adding customer to organization")
+        LOG.info("Adding customer to organization")
         # TODO(Simon): to do confirm if this is correct for server
         fields = ("usernames", "emailAddress")
         if self.client.platform == "cloud":
@@ -28,7 +28,7 @@ class OrganizationManager(object):
         data = {fields[0]: [customer[fields[1]]]}
 
         response = self.client.post(
-            f"organization/{organization['id']}/user",
+            "organization/{}/user".format(organization['id']),
             data=data, experimental=True)
 
         if response.ok and response.content:

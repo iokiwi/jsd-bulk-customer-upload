@@ -14,6 +14,9 @@ The versions of Jira Service Desk the script has been tested against are.
 |Service Desk Server|`4.7.1`|`2020-02-29`|
 
 ## Usage
+
+Requires `python >= 3.5`
+
 ```
 usage: python -m bulk_customer_import [-h] [-l LOGLEVEL]
                                base_url auth_user auth_pass filename
@@ -22,7 +25,7 @@ usage: python -m bulk_customer_import [-h] [-l LOGLEVEL]
 
 For example:
 ```bash
-python -m bulk_customer_import \ 
+python -m bulk_customer_import \
   "https://mycustomer.atlassian.net" \
   "local-admin" \
   "P4ssw0rd" \
@@ -32,7 +35,7 @@ python -m bulk_customer_import \
 
 For help run `python -m bulk_customer_import -h`
 
-The CSV Must Look as follows
+The CSV Must Look as follows. See [example.csv](example.csv)
 ```
 Organisation Name,Customer Full Name,Customer Email
 ACME,John Snow,john.snow@example.com

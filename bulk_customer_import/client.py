@@ -41,7 +41,6 @@ class Client(object):
             kwargs["data"] = json.dumps(kwargs["data"])
 
         url = urljoin(self.api_url, url)
-        # LOG.debug(f"{method} {url} {headers} {kwargs}")
         auth = HTTPBasicAuth(self.auth_user, self.auth_pass)
 
         return requests.request(
@@ -93,7 +92,7 @@ class Client(object):
             "platform": self.platform,
             "verify": self.verify,
             "base_url": self.base_url}
-        return f"Client {details}"
+        return "Client {}".format(details)
 
 
 client = None

@@ -12,7 +12,7 @@ class ServicedeskManager(object):
         LOG.info("Adding organization to service desk")
 
         response = self.client.post(
-            f"servicedesk/{servicedesk}/organization",
+            "servicedesk/{}/organization".format(servicedesk),
             data={"organizationId": organization["id"]},
             experimental=True,
         )
@@ -22,7 +22,7 @@ class ServicedeskManager(object):
 
     def add_customer(self, servicedesk, customer):
 
-        LOG.info(f"Adding customers to service desk")
+        LOG.info("Adding customers to service desk")
 
         # TODO(Simon): to do confirm if this is correct for server
         fields = ("usernames", "emailAddress")
@@ -31,7 +31,7 @@ class ServicedeskManager(object):
         data = {fields[0]: [customer[fields[1]]]}
 
         response = self.client.post(
-            f"servicedesk/{servicedesk}/customer",
+            "servicedesk/{}/customer".format(servicedesk),
             data=data,
             experimental=True,
         )

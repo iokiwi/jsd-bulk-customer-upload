@@ -66,7 +66,7 @@ def main():
     # For each row in the CSV (skip header)
     rows_not_processed = []
     for row in rows[1:]:
-        LOG.info(f"Processing row: {row}")
+        LOG.info("Processing row: {}".format(row))
         try:
             organization_name, customer_name, customer_email = (
                 row[0],
@@ -91,7 +91,7 @@ def main():
 
             # Create organisation if one does not exist
             if organization_name in organizations:
-                LOG.info(f"Organization Exists. Skipping creation")
+                LOG.info("Organization Exists. Skipping creation")
                 organization = organizations[organization_name]
             else:
                 organization = client.organization.create(
