@@ -1,8 +1,8 @@
-# README
-
 Hey! This is bought to you for free under the GPL3 license. If it helped you, please consider supporting this project by contributing, sharing it far and wide and/or making a small donation.
 
 <a href='https://ko-fi.com/K3K21GRP3' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://az743702.vo.msecnd.net/cdn/kofi4.png?v=2' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+
+# README
 
 A script for bulk uploading organizations and customers to Jira Service desk from a csv file. Aims to solve: [How to Bulk add Organizations and Customers in Service Desk Cloud?](https://community.atlassian.com/t5/Jira-Service-Desk-questions/How-to-Bulk-add-Organizations-and-Customers-in-Service-Desk/qaq-p/85932)
 
