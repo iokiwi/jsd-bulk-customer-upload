@@ -68,7 +68,7 @@ You can use the docker-compose file included in this repo to spin up a jira serv
 docker-compose up
 ```
 
-This will start a server on http://localhost:8080. You will need to apply a trial license and setup the instance. Change the image tag to arget different versions of jira service desk.
+This will start a server on http://localhost:8080/jira. You will need to apply a trial license (for free) and setup the instance. Change the image tag to arget different versions of jira service desk.
 
 Alternatively, you could use the atlassian [SDK](https://developer.atlassian.com/server/framework/atlassian-sdk/)
 
