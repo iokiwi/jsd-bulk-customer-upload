@@ -11,7 +11,6 @@ from bulk_customer_import.customer import CustomerManager
 from bulk_customer_import.organization import OrganizationManager
 from bulk_customer_import.servicedesk import ServicedeskManager
 
-
 LOG = logging.getLogger(__name__)
 
 
@@ -70,15 +69,32 @@ class Client(object):
 
     def get_paginated_resource(self, url, content_key, **kwargs):
 
-        results, last_page, start = [], False, 0
+        LOG.info("Retrieving all resources from paginated endpoint."
+                 "this may take a while")
+
+        results = []
+        last_page = False
+        start = 0
+        size = None
+
         params = kwargs.get("params", {})
         while not last_page:
-            params["start"] = start
-            response = self.get(url, **kwargs).json()
-            last_page = response["isLastPage"]
-            start += response["size"]
-            results += response[content_key]
 
+            if size:
+                LOG.info("Retrieving next {} resource(s) {} - {}".format(
+                         size, start, start+size))
+            else:
+                LOG.info("Retrieving resource(s) starting from {}"
+                         .format(start))
+
+            params["start"] = start
+            LOG.debug("request params: {}".format(params))
+            response = self.get(url, params=params, **kwargs).json()
+            LOG.debug(response)
+            last_page = response["isLastPage"]
+            size = response["size"]
+            start += size
+            results += response[content_key]
         return results
 
     @property

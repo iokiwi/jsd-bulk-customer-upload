@@ -1,2 +1,2 @@
-from bulk_customer_import import bulk_customer_import as foo
-foo.main()
+from bulk_customer_import import bulk_customer_import
+bulk_customer_import.main()
