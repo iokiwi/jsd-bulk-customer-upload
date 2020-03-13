@@ -11,7 +11,7 @@ The versions of Jira Service Desk the script has been tested against are.
 |Platform|Version|Date Tested|
 |---|---|---|
 |Service Desk Cloud|`cloud`|`2020-02-27`|
-|Service Desk Server|`4.7.1`|`2020-02-29`|
+|Service Desk Server|`4.7.1`|`2020-03-14`|
 
 ## Usage
 
