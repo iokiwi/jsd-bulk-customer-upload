@@ -67,6 +67,7 @@ def main():
     rows_not_processed = []
     for row in rows[1:]:
         LOG.info("Processing row: {}".format(row))
+
         try:
             organization_name, customer_name, customer_email = (
                 row[0],
@@ -74,20 +75,25 @@ def main():
                 row[2],
             )
 
-            customer_name_key = "fullName"
-            if client.platform == "cloud":
-                customer_name_key = "displayName"
+            # NOTE(simon): This should be abstracted
+            # customer_name_key = "fullName"
+            # if client.platform == "cloud":
+            #     customer_name_key = "displayName"
 
             # Create the customer if they do not already exist
-            try:
-                customer = client.customer.create(
-                    customer_name, customer_email)
-            except HTTPError as e:  # noqa
-                LOG.info("Customer Already Exists")
-                customer = {
-                    customer_name_key: customer_name,
-                    "emailAddress": customer_email,
-                }
+            # try:
+            #     customer = client.customer.create(
+            #         customer_name, customer_email)
+            # except HTTPError as e:  # noqa
+            #     # TODO: Is there anyway I can check that this actually is the
+            #     # error?
+            #     LOG.info("Customer Already Exists")
+
+            #     # Create a placeholder customer
+            #     customer = {
+            #         customer_name_key: customer_name,
+            #         "emailAddress": customer_email,
+            #     }
 
             # Create organisation if one does not exist
             if organization_name in organizations:
