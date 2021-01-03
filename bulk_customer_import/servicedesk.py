@@ -32,9 +32,7 @@ class BaseServicedeskManager(object):
         LOG.debug(data)
         response = self.client.post(
             "rest/servicedeskapi/servicedesk/{}/customer".format(servicedesk),
-            data=data,
-            experimental=True,
-        )
+            data=data, experimental=True)
 
         if response.ok and response.content:
             return response.json()

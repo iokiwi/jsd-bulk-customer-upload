@@ -70,7 +70,7 @@ def main():
 
     for row in rows:
         row_num += 1
-        print("[{}/{}] Processing row: {}".format(
+        print("\n[{}/{}] Processing row: {}".format(
             row_num, total_rows, row
         ))
 
@@ -115,6 +115,7 @@ def main():
 
             if customer_name and customer_email and organization_name:
                 # Move the customer into the organization
+                print("Adding {} to organization {}")
                 client.organization.add_customer(
                     organization, customer.to_dict())
 
