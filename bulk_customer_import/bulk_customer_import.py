@@ -1,9 +1,7 @@
 import logging
 import argparse
 
-from requests.exceptions import HTTPError
-
-from bulk_customer_import import client as sdclient
+from client.base import get_client
 from bulk_customer_import import utils
 
 parser = argparse.ArgumentParser()
@@ -32,7 +30,7 @@ parser.add_argument(
     "-l",
     "--loglevel",
     type=str.upper,
-    default="INFO",
+    default="ERROR",
     choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
     help="Set log level",
 )
@@ -48,7 +46,7 @@ LOG = logging.getLogger(__name__)
 
 def main():
 
-    client = sdclient.get_client(
+    client = get_client(
         base_url=args.base_url,
         auth_user=args.auth_user,
         auth_pass=args.auth_pass)
@@ -65,8 +63,16 @@ def main():
 
     # For each row in the CSV (skip header)
     rows_not_processed = []
-    for row in rows[1:]:
-        LOG.info("Processing row: {}".format(row))
+    rows = rows[1:]
+
+    total_rows = len(rows)
+    row_num = 0
+
+    for row in rows:
+        row_num += 1
+        print("[{}/{}] Processing row: {}".format(
+            row_num, total_rows, row
+        ))
 
         try:
             organization_name, customer_name, customer_email = (
@@ -75,45 +81,42 @@ def main():
                 row[2],
             )
 
-            # NOTE(simon): This should be abstracted
-            # customer_name_key = "fullName"
-            # if client.platform == "cloud":
-            #     customer_name_key = "displayName"
+            if customer_email and customer_name:
 
-            # Create the customer if they do not already exist
-            # try:
-            #     customer = client.customer.create(
-            #         customer_name, customer_email)
-            # except HTTPError as e:  # noqa
-            #     # TODO: Is there anyway I can check that this actually is the
-            #     # error?
-            #     LOG.info("Customer Already Exists")
+                print("Creating customer:")
+                print("Name:", customer_name)
+                print("Email", customer_email)
 
-            #     # Create a placeholder customer
-            #     customer = {
-            #         customer_name_key: customer_name,
-            #         "emailAddress": customer_email,
-            #     }
+                customer = client.customer.create(
+                    customer_name, customer_email
+                )
 
-            # Create organisation if one does not exist
-            if organization_name in organizations:
-                LOG.info("Organization Exists. Skipping creation")
-                organization = organizations[organization_name]
-            else:
-                organization = client.organization.create(
-                    organization_name)
+                print("Adding {} to the service desk".format(customer.email))
+                client.servicedesk.add_customer(
+                    servicedesk_id, customer.to_dict())
 
-            try:
+            if organization_name:
+                # Create organization if one does not exist
+                if organization_name in organizations:
+                    print("Organization already exists: {}".format(
+                        organization_name))
+                    organization = organizations[organization_name]
+                else:
+                    print("Creating Organization: {}".format(
+                        organization_name))
+                    organization = client.organization.create(
+                        organization_name)
+
+                # To do, this should be abstracted
                 client.servicedesk.add_organization(
                     args.servicedesk_id, organization)
-            except HTTPError:  # noqa
+
                 LOG.info("Organization already part of service desk")
 
-            # Move the customer into the organization
-            client.organization.add_customer(organization, customer)
-
-            # Add the customer into the service desk
-            client.servicedesk.add_customer(servicedesk_id, customer)
+            if customer_name and customer_email and organization_name:
+                # Move the customer into the organization
+                client.organization.add_customer(
+                    organization, customer.to_dict())
 
         except Exception as e:  # noqa
             LOG.exception("Failed to process row: {}".format(row))

@@ -7,8 +7,9 @@ from urllib.parse import urljoin
 import requests
 from requests.auth import HTTPBasicAuth
 
-from bulk_customer_import.client import ServerClient
-from bulk_customer_import.client import CloudClient
+from bulk_customer_import.servicedesk import CloudServicedeskManager, ServerServicedeskManager # noqa
+from bulk_customer_import.customer import CloudCustomerManager, ServerCustomerManager # noqa
+from bulk_customer_import.organization import CloudOrganizationManager, ServerOrganizationManager # noqa
 
 LOG = logging.getLogger(__name__)
 
@@ -18,12 +19,14 @@ class BaseClient(object):
     experimental_api_header = None
 
     def __init__(self, base_url=None, auth_user=None, auth_pass=None,
-                 verify=None, **kwargs):
+                 verify=None):
+
         if not base_url.endswith("/"):
             base_url += "/"
         self.base_url = base_url
+
         self.verify = verify
-        self.api_url = urljoin(self.base_url, "rest/servicedeskapi/")
+        # self.api_url = urljoin(self.base_url)
         self.auth_pass = auth_pass
         self.auth_user = auth_user
         self.organization = None
@@ -38,9 +41,10 @@ class BaseClient(object):
             headers.update(self.experimental_api_header)
 
         if "data" in kwargs:
+            headers.update({"Content-Type": "application/json"})
             kwargs["data"] = json.dumps(kwargs["data"])
 
-        url = urljoin(self.api_url, url)
+        url = urljoin(self.base_url, url)
         auth = HTTPBasicAuth(self.auth_user, self.auth_pass)
 
         return requests.request(
@@ -52,20 +56,10 @@ class BaseClient(object):
         headers.update({"Content-Type": "application/json"})
         kwargs["headers"] = headers
         response = self.request("POST", url, **kwargs)
-
-        if not response.ok:
-            LOG.debug(response.text)
-
-        response.raise_for_status()
         return response
 
     def get(self, url, **kwargs):
         response = self.request("GET", url, **kwargs)
-        response.raise_for_status()
-
-        if not response.ok:
-            LOG.debug(response.text)
-
         return response
 
     def get_paginated_resource(self, url, content_key, **kwargs):
@@ -84,8 +78,8 @@ class BaseClient(object):
                 LOG.debug("Retrieving next {} resource(s) {} - {}".format(
                          size, start, start+size))
             else:
-                LOG.debug("Retrieving resource(s) starting from {}"
-                         .format(start))
+                LOG.debug("Retrieving resource(s) starting from {}".format(
+                    start))
             params["start"] = start
             LOG.debug("request params: {}".format(params))
             response = self.get(url, params=params, **kwargs).json()
@@ -103,21 +97,48 @@ class BaseClient(object):
         return "Client {}".format(details)
 
 
+class ServerClient(BaseClient):
+
+    experimental_api_header = {"X-ExperimentalApi": "opt-in"}
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.organization = ServerOrganizationManager(self)
+        self.customer = ServerCustomerManager(self)
+        self.servicedesk = ServerServicedeskManager(self)
+
+
+class CloudClient(BaseClient):
+
+    experimental_api_header = {"X-ExperimentalApi": "true"}
+
+    def __init__(self, **kwargs):
+
+        super().__init__(**kwargs)
+        self.organization = CloudOrganizationManager(self)
+        self.customer = CloudCustomerManager(self)
+        self.servicedesk = CloudServicedeskManager(self)
+
+
 def get_platform(base_url):
-    if urlparse(self.base_url).netloc.endswith("atlassian.net"):
+
+    if urlparse(base_url).netloc.endswith("atlassian.net"):
         return "cloud"
     return "server"
 
+
 client = None
 
-def get_client(*args, **kwargs):
+
+def get_client(**kwargs):
     global client
 
     if client:
         return client
 
-    return {
-        "server": ServerClient(*args, **kwargs)
-        "cloud": CloudClient(*args, **kwargs)
+    client = {
+        "server": ServerClient(**kwargs),
+        "cloud": CloudClient(**kwargs)
     }[get_platform(kwargs["base_url"])]
 
+    return client
