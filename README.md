@@ -1,6 +1,10 @@
-Hey! This is bought to you for free under the GPL3 license. If it helped you, please consider supporting this project by contributing, sharing it far and wide and/or making a small donation.
+[![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
 
-<a href='https://ko-fi.com/K3K21GRP3' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://az743702.vo.msecnd.net/cdn/kofi4.png?v=2' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+It's become to much of a burden to maintain this script I no longer personally require.
+
+Atlassian have not made it easy to support both Cloud and server as the products and api's have diverged too significantly.
+
+I have gone deep down a rabit hole of trying to support cloud and server versions but in testing and developing the version of the script currently on master I am no longer sure how well server is and cannot dedicate any more time to this.
 
 # README
 
@@ -10,8 +14,8 @@ The versions of Jira Service Desk the script has been tested against are.
 
 |Platform|Version|Date Tested|
 |---|---|---|
-|Service Desk Cloud|`cloud`|`2020-02-27`|
-|Service Desk Server|`4.7.1`|`2020-03-14`|
+|Service Desk Cloud|`cloud`|`2021-01-04`|
+|Service Desk Server|`Not Tested`|`Not Tested`|
 
 ## Usage
 

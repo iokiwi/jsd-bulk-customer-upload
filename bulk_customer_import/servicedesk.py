@@ -3,7 +3,10 @@ import logging
 LOG = logging.getLogger(__name__)
 
 
-class ServicedeskManager(object):
+class BaseServicedeskManager(object):
+
+    fields = None
+
     def __init__(self, client):
         self.client = client
 
@@ -12,7 +15,8 @@ class ServicedeskManager(object):
         LOG.info("Adding organization to service desk")
 
         response = self.client.post(
-            "servicedesk/{}/organization".format(servicedesk),
+            "rest/servicedeskapi/servicedesk/{}/organization".format(
+                servicedesk),
             data={"organizationId": organization["id"]},
             experimental=True,
         )
@@ -22,19 +26,50 @@ class ServicedeskManager(object):
 
     def add_customer(self, servicedesk, customer):
 
-        LOG.info("Adding customers to service desk")
+        LOG.info("Adding customer to service desk: %s" % customer)
 
-        # TODO(Simon): to do confirm if this is correct for server
-        fields = ("usernames", "emailAddress")
-        if self.client.platform == "cloud":
-            fields = ("accountIds", "accountId")
-        data = {fields[0]: [customer[fields[1]]]}
+        data = {self.fields[0]: [customer[self.fields[1]]]}
+        LOG.debug(data)
+        response = self.client.post(
+            "rest/servicedeskapi/servicedesk/{}/customer".format(servicedesk),
+            data=data, experimental=True)
+
+        if response.ok and response.content:
+            return response.json()
+
+    def get(self, servicedesk_id):
+        pass
+
+
+class CloudServicedeskManager(BaseServicedeskManager):
+
+    fields = ("accountIds", "accountId")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def add_customer(self, servicedesk, customer):
+
+        if type(customer) == dict:
+            customer = self.client.customer.from_dict(customer)
+
+        LOG.info("Adding customer to service desk: %s" % customer)
+
+        account_id = customer.get_account_id()
 
         response = self.client.post(
-            "servicedesk/{}/customer".format(servicedesk),
-            data=data,
+            "rest/servicedeskapi/servicedesk/{}/customer".format(servicedesk),
+            data={"accountIds": [account_id]},
             experimental=True,
         )
 
         if response.ok and response.content:
             return response.json()
+
+
+class ServerServicedeskManager(BaseServicedeskManager):
+
+    fields = ("usernames", "emailAddress")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
